@@ -8,7 +8,7 @@ namespace Messenger.Models
     public class User : IdentityUser
     {
         public string Status { get; set; } = "public"; 
-        public string Avatar { get; set; } // URL или base64-строка с закодированной аватаркой
+        public string Avatar { get; set; } // #HEX или base64-строка с закодированной аватаркой
 
         [JsonIgnore]
         [ValidateNever]
