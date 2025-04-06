@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
-import { getUserById, sendMessage } from '../services/api';
+import { getMessageById, getUserById, sendMessage } from '../services/api';
 import { type Chat, Message, type User } from '../types';
 
 const logger = {
@@ -106,7 +106,7 @@ const ChatPage = () => {
       setSending(true);
       await sendMessage({ 
         chatId,
-        senderId: currentUser.id,
+        sender: currentUser,
         content: newMessage
       });
       setNewMessage('');
@@ -130,6 +130,27 @@ const ChatPage = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const [fullMessages, setFullMessages] = useState<Message[]>([]);
+
+/*useEffect(() => {
+  const loadMessages = async () => {
+    if (!chat?.messages) return;
+    
+    const loadedMessages = await Promise.all(
+      chat.messages.map(async msg => {
+        const fullMsg = await getMessageById(msg.messageId);
+        logger.warn('Full Message:', fullMsg); // Логируем полное сообщение для отладки
+        return fullMsg || msg;
+      })
+    );
+    
+    setFullMessages(loadedMessages);
+  };
+
+  loadMessages();
+}, [chat?.messages]);*/
+  
 
   if (!chat) {
     return <div className="flex h-screen items-center justify-center text-gray-500">Loading chat...</div>;
@@ -156,56 +177,104 @@ const ChatPage = () => {
           </svg>
         </button>
         <div className="flex items-center">
-          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
-            {otherUser?.username?.charAt(0).toUpperCase() || '?'}
-          </div>
-          <div className="ml-3">
-            <div className="font-medium text-white">
-              {otherUser?.username || 'Unknown user'}
+  {otherUser?.avatar ? (
+    // Если аватар начинается с # - это цвет фона
+    otherUser.avatar.startsWith('#') ? (
+      <div 
+        className="h-10 w-10 rounded-full flex items-center justify-center text-white font-medium"
+        style={{ backgroundColor: otherUser.avatar }}
+      >
+        {otherUser?.username?.charAt(0).toUpperCase() || '?'}
+      </div>
+    ) : (
+      // Иначе это base64 изображение
+      <img 
+        src={otherUser.avatar} 
+        alt="User avatar"
+        className="h-10 w-10 rounded-full object-cover"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.onerror = null;
+          target.src = '';
+          target.outerHTML = `
+            <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-medium" 
+                 style="background-color: #6b7280">
+              ${otherUser?.username?.charAt(0).toUpperCase() || '?'}
             </div>
-            <div className="text-xs text-green-100">
-              {otherUser?.status || 'Offline'}
-            </div>
-          </div>
-        </div>
+          `;
+        }}
+      />
+    )
+  ) : (
+    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
+      {otherUser?.username?.charAt(0).toUpperCase() || '?'}
+    </div>
+  )}
+  <div className="ml-3">
+    <div className="font-medium text-white">
+      {otherUser?.username || 'Unknown user'}
+    </div>
+    <div className="text-xs text-green-100">
+      {otherUser?.status || 'Offline'}
+    </div>
+  </div>
+</div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {chat.messages?.length ? (
-          [...chat.messages]
-            .sort((a, b) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime())
-            .map((message, index) => (
-              <div
-                key={message.messageId || index}
-                className={`mb-4 flex ${message.sender?.id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`rounded-lg px-4 py-2 max-w-xs sm:max-w-md ${
-                  message.sender?.id === currentUser?.id 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-white text-gray-800'
-                }`}>
-                  <div>{message.content}</div>
-                  <div className={`mt-1 text-right text-xs ${
-                    message.sender?.id === currentUser?.id 
-                      ? 'text-green-200' 
-                      : 'text-gray-500'
-                  }`}>
-                    {formatTimestamp(message.timestamp)}
-                  </div>
-                </div>
+{/* Messages */}
+<div className="flex-1 overflow-y-auto p-4">
+{chat.messages?.length ? (
+    [...chat.messages]
+      .sort((a, b) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime())
+      .map((message, index) => {
+  
+        const isCurrentUser = message.sender?.id === currentUser?.id;
+        //const msg = getMessageById(message.messageId)
+        
+        // Логирование для отладки
+        console.log('Rendering message:', {
+          id: message.messageId || index,
+          content: message.content,
+          senderId: message.sender?.id, //Issue: если message.sender?.id то почему-то всегда undefined, хотя не должно / Solved
+          currentUserId: currentUser?.id,
+          isCurrentUser: isCurrentUser,
+          timestamp: message.timestamp,
+          message: message,
+          otherUserAvatar: otherUser?.avatar
+        });
+
+        return (
+          <div
+            key={message.messageId || index}
+            className={`mb-4 flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+          >
+            <div className={`max-w-xs sm:max-w-md rounded-lg px-4 py-2 ${isCurrentUser 
+              ? 'bg-green-500 text-white rounded-tr-none' 
+              : 'bg-gray-300 text-gray-800 rounded-tl-none'}`}
+            >
+              <div className="font-medium">
+                {message.content}
               </div>
-            ))
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center">
-            <div className="text-gray-500">No messages yet</div>
-            <div className="mt-2 text-sm text-gray-400">
-              Send a message to start the conversation
+              <div className={`mt-1 text-xs text-right ${isCurrentUser 
+                ? 'text-green-200' 
+                : 'text-gray-500'}`}
+              >
+                {formatTimestamp(message.timestamp)}
+              </div>
             </div>
           </div>
-        )}
-        <div ref={messagesEndRef} />
+      );
+      })
+  ) : (
+    <div className="flex h-full flex-col items-center justify-center">
+      <div className="text-gray-500">No messages yet</div>
+      <div className="mt-2 text-sm text-gray-400">
+        Send a message to start the conversation
       </div>
+    </div>
+  )}
+  <div ref={messagesEndRef} />
+</div>
 
       {/* Message input */}
       <div className="border-t border-gray-200 bg-white p-3">

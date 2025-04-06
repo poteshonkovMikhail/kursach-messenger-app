@@ -74,23 +74,36 @@ export const getUserChats = async (userId: string): Promise<Chat[] | null> => {
   }
 };
 
-export const getUsers = async (): Promise<User[]> => {
-  try {
-    const response = await api.get<User[]>('/Users');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return [];
-  }
-};
-
+// В api.ts, функция getUserById
 export const getUserById = async (userId: string | undefined): Promise<User | null> => {
   try {
     const response = await api.get<User>(`/Users/${userId}`);
-    return response.data;
+    return {
+      id: response.data.id,
+      username: response.data.username,
+      status: response.data.status,
+      avatar: response.data.avatar // Добавляем аватар
+    };
   } catch (error) {
     console.error(`Error fetching user ${userId}:`, error);
     return null;
+  }
+};
+
+// Аналогично для других функций, например getUsers
+export const getUsers = async (): Promise<User[]> => {
+  try {
+    const response = await api.get<User[]>('/Users');
+    
+    return response.data.map(user => ({
+      id: user.id,
+      username: user.username,
+      status: user.status,
+      avatar: user.avatar // Добавляем аватар
+    }));
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
   }
 };
 
@@ -245,7 +258,7 @@ export const getMessages = async (): Promise<Message[]> => {
   }
 };
 
-export const getMessageById = async (messageId: string): Promise<Message | null> => {
+export const getMessageById = async (messageId: string | undefined): Promise<Message | null> => { //костыльное undefined
   try {
     const response = await api.get<Message>(`/Messages/${messageId}`);
     return response.data;
@@ -255,15 +268,20 @@ export const getMessageById = async (messageId: string): Promise<Message | null>
   }
 };
 
+
 // In your API service file
 export const sendMessage = async (messageData: {
   chatId: string;
-  senderId: string;
+  sender: User;
   content: string;
 }): Promise<Message | null> => {
   try {
     const response = await api.post<Message>('/Messages', {
-      senderId: messageData.senderId,
+      sender: {
+        id: messageData.sender.id,
+        username: messageData.sender.username,
+        status: messageData.sender.status
+      },
       chatId: messageData.chatId,
       content: messageData.content
     });

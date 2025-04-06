@@ -2,6 +2,7 @@ export interface User {
   id: string;  // Изменяем с userId на id для соответствия бэкенду
   username?: string;
   status?: string;
+  avatar?: string;
 }
 
 export interface Message {

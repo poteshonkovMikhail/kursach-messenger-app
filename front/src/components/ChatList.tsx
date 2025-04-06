@@ -76,7 +76,7 @@ const ChatList = () => {
     console.log('No chats found for user ID:', currentUser?.id);
     return (
       <div className="flex h-full flex-col items-center justify-center p-4">
-        <div className="text-gray-500">{currentUser?.id}</div>
+        <div className="text-gray-500">{"No chats founded for " + currentUser?.username}</div>
         <div className="mt-2 text-sm text-gray-400">
           Start a new chat to begin messaging
         </div>

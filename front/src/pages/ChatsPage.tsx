@@ -4,6 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import ChatList from '../components/ChatList';
 import { getUsers, createChat } from '../services/api';
 import type { User } from '../types';
+import { createAvatar } from '../utils/avatar_Temporarily';
 
 const ChatsPage = () => {
   const { currentUser, logout } = useUser();
@@ -18,7 +19,7 @@ const ChatsPage = () => {
     }
   }, [isNewChatOpen]);
 
-  const fetchUsers = async () => {
+ const fetchUsers = async () => {
     if (!currentUser?.id) return;
 
     try {
@@ -66,19 +67,18 @@ const ChatsPage = () => {
       setLoading(false);
     }
   };
+
+
   const handleLogout = () => {
     logout();
     navigate('/');
-
-  
   };
-
 
   return (
     <div className="flex h-screen flex-col bg-white">
       {/* Header */}
       <div className="flex items-center justify-between bg-green-600 px-4 py-3">
-        <div className="text-xl font-semibold text-white">WhatsApp-like</div>
+        <div className="text-xl font-semibold text-white">Messenger</div>
         <div className="flex items-center">
           <div className="mr-4 text-white">{currentUser?.username}</div>
           <button
@@ -92,7 +92,6 @@ const ChatsPage = () => {
 
       {/* Chat list with new chat button */}
       <div className="relative flex-1">
-        {/* New chat button */}
         <div className="absolute bottom-6 right-6 z-10">
           <button
             onClick={() => setIsNewChatOpen(!isNewChatOpen)}
@@ -129,7 +128,7 @@ const ChatsPage = () => {
                 />
               </svg>
             )}
-          </button>
+           </button>
         </div>
 
         {/* User list for new chat */}
@@ -168,24 +167,33 @@ const ChatsPage = () => {
                   <div className="text-gray-500">No users found</div>
                 </div>
               ) : (
-                users.map((user) => (
-                  <div
-                    key={user.id}
-                    onClick={() => startNewChat(user.id)}
-                    className="cursor-pointer border-b border-gray-200 px-4 py-3 transition hover:bg-gray-50"
-                  >
-                    <div className="flex items-center">
-                      <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
-                        {user.username?.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="ml-4">
-                        <div className="font-medium">{user.username}</div>
-                        <div className="mt-1 text-sm text-gray-500">
-                          {user.status || 'Available'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                // В компоненте ChatsPage, в части отображения списка пользователей
+users.map((user) => (
+  <div
+    key={user.id}
+    onClick={() => startNewChat(user.id)}
+    className="cursor-pointer border-b border-gray-200 px-4 py-3 transition hover:bg-gray-50"
+  >
+    <div className="flex items-center">
+      {user.avatar ? (
+        <img 
+          src={user.avatar}
+          alt="User avatar"
+          className="h-12 w-12 rounded-full object-cover"
+        />
+      ) : (
+        <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">
+          {user.username?.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div className="ml-4">
+        <div className="font-medium">{user.username}</div>
+        <div className="mt-1 text-sm text-gray-500">
+          {user.status || 'Available'}
+        </div>
+      </div>
+    </div>
+  </div>
                 ))
               )}
             </div>

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj": {}
+    "C:\\Users\\potes\\Source\\Repos\\kursach-messenger-app-local\\back\\Messenger.csproj": {}
   },
   "projects": {
-    "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj": {
+    "C:\\Users\\potes\\Source\\Repos\\kursach-messenger-app-local\\back\\Messenger.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj",
+        "projectUniqueName": "C:\\Users\\potes\\Source\\Repos\\kursach-messenger-app-local\\back\\Messenger.csproj",
         "projectName": "Messenger",
-        "projectPath": "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj",
+        "projectPath": "C:\\Users\\potes\\Source\\Repos\\kursach-messenger-app-local\\back\\Messenger.csproj",
         "packagesPath": "C:\\Users\\potes\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\obj\\",
+        "outputPath": "C:\\Users\\potes\\Source\\Repos\\kursach-messenger-app-local\\back\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
