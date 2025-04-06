@@ -35,7 +35,7 @@ public class MessagesController : ControllerBase
             .Select(m => new MessageDTO
             {
                 MessageId = m.MessageId,
-                SenderId = m.SenderId,
+                Sender = m.Sender,
                 ChatId = m.ChatId,
                 Content = m.Content,
                 Timestamp = m.Timestamp
@@ -47,7 +47,10 @@ public class MessagesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Message>> CreateMessage([FromBody] MessageDTO messageDto)
     {
-        var sender = await _context.Users.FindAsync(messageDto.SenderId);
+        if (messageDto.Sender == null || string.IsNullOrEmpty(messageDto.Sender.Id))
+            return BadRequest("Sender information is required");
+
+        var sender = await _context.Users.FindAsync(messageDto.Sender.Id);
         if (sender == null)
             return BadRequest("Sender not found");
 
@@ -69,7 +72,6 @@ public class MessagesController : ControllerBase
 
         return CreatedAtAction(nameof(GetMessage), new { id = message.MessageId }, message);
     }
-
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateMessage(Guid id, Message message)
     {

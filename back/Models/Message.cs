@@ -8,10 +8,10 @@ namespace Messenger.Models
         public Guid MessageId { get; set; }
         public string Content { get; set; }
         public DateTime Timestamp { get; set; }
-
+        [JsonIgnore]
         public string SenderId { get; set; }
 
-        [JsonIgnore]
+        //[JsonIgnore]
         public User Sender { get; set; }
 
         public Guid ChatId { get; set; }
@@ -23,7 +23,7 @@ namespace Messenger.Models
         public Message(User sender, string content, Chat chat)
         {
             MessageId = Guid.NewGuid();
-            SenderId = sender.Id;
+            //SenderId = sender.Id;
             Sender = sender;
             Content = content;
             Timestamp = DateTime.UtcNow;

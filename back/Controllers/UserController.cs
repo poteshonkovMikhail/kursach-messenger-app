@@ -48,7 +48,8 @@ public class UsersController : ControllerBase
             {
                 Id = u.Id,
                 Username = u.UserName,
-                Status = u.Status
+                Status = u.Status,
+                Avatar = u.Avatar // Добавляем аватар в DTO
             })
             .ToListAsync();
     }
@@ -63,7 +64,8 @@ public class UsersController : ControllerBase
         {
             Id = user.Id,
             Username = user.UserName,
-            Status = user.Status
+            Status = user.Status,
+            Avatar = user.Avatar // Добавляем аватар в DTO
         };
     }
 
@@ -77,16 +79,23 @@ public class UsersController : ControllerBase
         {
             Id = user.Id,
             Username = user.UserName,
-            Status = user.Status
+            Status = user.Status,
+            Avatar = user.Avatar // Добавляем аватар в DTO
         };
     }
 
     [HttpPost]
     public async Task<ActionResult<UserDTO>> CreateUser(UserDTO userDto)
     {
+        // Генерируем аватар только если он не был предоставлен
+        var avatar = !string.IsNullOrEmpty(userDto.Avatar)
+            ? userDto.Avatar
+            : GenerateOptimizedDefaultAvatar(userDto.Username);
+
         var user = new User(userDto.Username)
         {
-            Status = userDto.Status
+            Status = userDto.Status,
+            Avatar = avatar
         };
 
         var result = await _userManager.CreateAsync(user);
@@ -99,8 +108,24 @@ public class UsersController : ControllerBase
             {
                 Id = user.Id,
                 Username = user.UserName,
-                Status = user.Status
+                Status = user.Status,
+                Avatar = user.Avatar
             });
+    }
+
+    private string GenerateOptimizedDefaultAvatar(string username)
+    {
+        // Возвращаем только HEX-код цвета
+        var colors = new[] {
+        "#3B82F6", // blue-500
+        "#EF4444", // red-500
+        "#10B981", // green-500
+        "#F59E0B", // yellow-500
+        "#8B5CF6", // violet-500
+        "#EC4899"  // pink-500
+    };
+
+        return colors[Math.Abs(username.GetHashCode()) % colors.Length];
     }
 
     [HttpPut("{id}")]
@@ -111,6 +136,10 @@ public class UsersController : ControllerBase
 
         user.UserName = userDto.Username;
         user.Status = userDto.Status;
+        if (!string.IsNullOrEmpty(userDto.Avatar))
+        {
+            user.Avatar = userDto.Avatar;
+        }
 
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
@@ -130,5 +159,17 @@ public class UsersController : ControllerBase
             return BadRequest(result.Errors);
 
         return NoContent();
+    }
+
+    [HttpPost("{id}/avatar")]
+    public async Task<IActionResult> UploadAvatar(string id, [FromBody] string avatarBase64)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        user.Avatar = avatarBase64;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { Avatar = user.Avatar });
     }
 }

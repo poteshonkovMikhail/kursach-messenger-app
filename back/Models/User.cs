@@ -7,7 +7,8 @@ namespace Messenger.Models
 {
     public class User : IdentityUser
     {
-        public string Status { get; set; } = "public"; // Статус пользователя
+        public string Status { get; set; } = "public"; 
+        public string Avatar { get; set; } // URL или base64-строка с закодированной аватаркой
 
         [JsonIgnore]
         [ValidateNever]
@@ -19,17 +20,19 @@ namespace Messenger.Models
         [JsonIgnore]
         public List<Message> ReceivedMessages { get; set; } = new List<Message>();
 
-        // Добавляем связь с чатами, где пользователь является User1
         [JsonIgnore]
         public List<Chat> ChatsAsUser1 { get; set; } = new List<Chat>();
 
-        // Добавляем связь с чатами, где пользователь является User2
         [JsonIgnore]
         public List<Chat> ChatsAsUser2 { get; set; } = new List<Chat>();
 
         public User() : base() { }
 
-        public User(string username) : base(username) { }
+        public User(string username) : base(username)
+        {
+            // Генерируем аватар по уиолчанию при создании пользователя
+            Avatar = null;
+        }
 
         public void UpdateStatus(string newStatus)
         {

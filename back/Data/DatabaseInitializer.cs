@@ -12,13 +12,33 @@ public static class DatabaseInitializer
             return; // База уже инициализирована
         }
 
-        // Создаем тестовых пользователей
+        // Создаем тестовых пользователей с аватарами
         var users = new List<User>
         {
-            new User("user1") { Email = "user1@example.com", Status = "online" },
-            new User("user2") { Email = "user2@example.com", Status = "away" },
-            new User("user3") { Email = "user3@example.com", Status = "busy" },
-            new User("user4") { Email = "user4@example.com", Status = "online" }
+            new User("user1")
+            {
+                Email = "user1@example.com",
+                Status = "online",
+                Avatar = "#3B82F6" // Синий
+            },
+            new User("user2")
+            {
+                Email = "user2@example.com",
+                Status = "away",
+                Avatar = "#EF4444" // Красный
+            },
+            new User("user3")
+            {
+                Email = "user3@example.com",
+                Status = "busy",
+                Avatar = "#10B981" // Зеленый
+            },
+            new User("user4")
+            {
+                Email = "user4@example.com",
+                Status = "online",
+                Avatar = "#8B5CF6" // Фиолетовый
+            }
         };
 
         foreach (var user in users)
@@ -30,12 +50,13 @@ public static class DatabaseInitializer
             }
         }
 
-        // Создаем чаты между пользователями
+        // Получаем пользователей после создания
         var user1 = await userManager.FindByNameAsync("user1");
         var user2 = await userManager.FindByNameAsync("user2");
         var user3 = await userManager.FindByNameAsync("user3");
         var user4 = await userManager.FindByNameAsync("user4");
 
+        // Создаем чаты между пользователями
         var chats = new List<Chat>
         {
             new Chat(user1, user2),

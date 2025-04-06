@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\ispu\\Конструирование интернет-приложений\\Lab_2\\Lab2\\Messenger.csproj": {}
+    "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj": {}
   },
   "projects": {
-    "C:\\ispu\\Конструирование интернет-приложений\\Lab_2\\Lab2\\Messenger.csproj": {
+    "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\ispu\\Конструирование интернет-приложений\\Lab_2\\Lab2\\Messenger.csproj",
+        "projectUniqueName": "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj",
         "projectName": "Messenger",
-        "projectPath": "C:\\ispu\\Конструирование интернет-приложений\\Lab_2\\Lab2\\Messenger.csproj",
+        "projectPath": "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\Messenger.csproj",
         "packagesPath": "C:\\Users\\potes\\.nuget\\packages\\",
-        "outputPath": "C:\\ispu\\Конструирование интернет-приложений\\Lab_2\\Lab2\\obj\\",
+        "outputPath": "C:\\Users\\potes\\source\\repos\\kursach-messenger-app\\back\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
