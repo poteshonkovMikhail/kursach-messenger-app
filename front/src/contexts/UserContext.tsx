@@ -1,8 +1,7 @@
 import type React from 'react';
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '../types';
-import { getUserByUsername } from '../services/api';
-// contexts/UserContext.tsx
+import { getUserByUsername } from '../services/api'
 import { getCurrentUser, logoutUser } from '../services/api';
 
 interface AuthContextType {
