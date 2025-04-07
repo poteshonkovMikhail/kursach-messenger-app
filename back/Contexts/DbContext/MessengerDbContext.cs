@@ -6,9 +6,11 @@ using Newtonsoft.Json;
 
 public class MessengerDbContext : IdentityDbContext<User>
 {
-    public DbSet<Chat> Chats { get; set; }
+
+    public virtual DbSet<Chat> Chats { get; set; }
     public DbSet<GroupChat> GroupChats { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public virtual DbSet<User> Users { get; set; }
 
     public MessengerDbContext(DbContextOptions<MessengerDbContext> options) : base(options)
     {

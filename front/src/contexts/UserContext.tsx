@@ -2,77 +2,105 @@ import type React from 'react';
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '../types';
 import { getUserByUsername } from '../services/api';
+// contexts/UserContext.tsx
+import { getCurrentUser, logoutUser } from '../services/api';
 
-interface UserContextType {
-  currentUser: { id: string; username?: string; status?: string } | null;
-  setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
-  isAuthenticated: boolean;
-  login: (username: string) => Promise<boolean>;
+interface AuthContextType {
+  currentUser: User | null;
+  token: string | null;
+  isAuthenticated: boolean;  // Добавляем флаг аутентификации
+  setCurrentUser: (user: User | null) => void;
+  setToken: (token: string | null) => void;
+  login: (token: string, user: User, rememberMe: boolean) => void;
   logout: () => void;
 }
 
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
-export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);  // Состояние аутентификации
+  const [loading, setLoading] = useState(true);
 
-  // Check if user is stored in local storage when the app loads
-  const login = async (username: string): Promise<boolean> => {
-    try {
-      const user = await getUserByUsername(username);
-      if (user && user.id) {  // Проверяем user.id вместо user.userId
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        return true;
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const storedUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+
+      if (storedToken) {
+        try {
+          setToken(storedToken);
+          if (storedUser) {
+            setCurrentUser(JSON.parse(storedUser));
+            setIsAuthenticated(true);  // Устанавливаем аутентификацию
+          } else {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+            setIsAuthenticated(!!user);  // Устанавливаем аутентификацию
+          }
+        } catch (error) {
+          console.error('Error initializing auth:', error);
+          logout();
+        }
       }
-      return false;
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
+
+  // Добавляем метод для входа
+  const login = (token: string, user: User, rememberMe: boolean) => {
+    setToken(token);
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    
+    if (rememberMe) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+    } else {
+      sessionStorage.setItem('token', token);
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+    }
+  };
+
+  const logout = async () => {
+    try {
+      // Сначала пытаемся выполнить выход на сервере
+      await logoutUser();
     } catch (error) {
-      console.error('Login error:', error);
-      return false;
+      // Даже если выход на сервере не удался, продолжаем очистку на клиенте
+      console.warn('Server logout failed, clearing client session', error);
+    } finally {
+      // Всегда очищаем клиентское состояние
+      setToken(null);
+      setCurrentUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('currentUser');
     }
   };
   
-  // В useEffect при загрузке:
-  useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        // Добавляем проверку на наличие обязательных полей
-        if (parsedUser && parsedUser.id && parsedUser.username) {
-          setCurrentUser(parsedUser);
-          setIsAuthenticated(true);
-        } else {
-          console.warn('Invalid user data in localStorage');
-          localStorage.removeItem('currentUser');
-        }
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('currentUser');
-      }
-    }
-  }, []);
-    
-  const logout = () => {
-    setCurrentUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('currentUser');
-  };
-
   return (
-    <UserContext.Provider
-      value={{ currentUser, setCurrentUser, isAuthenticated, login, logout }}
-    >
-      {children}
-    </UserContext.Provider>
+    <AuthContext.Provider value={{ 
+      currentUser, 
+      token, 
+      isAuthenticated,  // Добавляем в контекст
+      setCurrentUser, 
+      setToken, 
+      login,
+      logout 
+    }}>
+      {!loading && children}
+    </AuthContext.Provider>
   );
 };
 
-export const useUser = (): UserContextType => {
-  const context = useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useUser must be used within a UserProvider');
   }

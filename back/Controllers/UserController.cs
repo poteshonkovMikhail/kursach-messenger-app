@@ -6,117 +6,119 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
 
-[Route("api/[controller]")]
-[ApiController]
-[EnableCors("AllowAll")]
-public class UsersController : ControllerBase
+namespace Messenger.Controllers
 {
-    private readonly MessengerDbContext _context;
-    private readonly UserManager<User> _userManager;
-
-    public UsersController(MessengerDbContext context, UserManager<User> userManager)
+    [Route("api/[controller]")]
+    [ApiController]
+    [EnableCors("AllowAll")]
+    public class UsersController : ControllerBase
     {
-        _context = context;
-        _userManager = userManager;
-    }
+        private readonly MessengerDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-    [HttpGet("{id}/chats")]
-    public async Task<ActionResult<IEnumerable<Chat>>> GetUserChats(string id)
-    {
-        var user = await _context.Users
-            .Include(u => u.ChatsAsUser1)
-                .ThenInclude(c => c.User2)
-            .Include(u => u.ChatsAsUser2)
-                .ThenInclude(c => c.User1)
-            .Include(u => u.ChatsAsUser1)
-                .ThenInclude(c => c.Messages)
-            .Include(u => u.ChatsAsUser2)
-                .ThenInclude(c => c.Messages)
-            .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null) return NotFound();
-
-        var chats = user.ChatsAsUser1.Concat(user.ChatsAsUser2).ToList();
-        return chats;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
-    {
-        return await _context.Users
-            .Select(u => new UserDTO
-            {
-                Id = u.Id,
-                Username = u.UserName,
-                Status = u.Status,
-                Avatar = u.Avatar // Добавляем аватар в DTO
-            })
-            .ToListAsync();
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<UserDTO>> GetUser(string id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
-
-        return new UserDTO
+        public UsersController(MessengerDbContext context, UserManager<User> userManager)
         {
-            Id = user.Id,
-            Username = user.UserName,
-            Status = user.Status,
-            Avatar = user.Avatar // Добавляем аватар в DTO
-        };
-    }
+            _context = context;
+            _userManager = userManager;
+        }
 
-    [HttpGet("username/{username}")]
-    public async Task<ActionResult<UserDTO>> GetUserByUsername(string username)
-    {
-        var user = await _userManager.FindByNameAsync(username);
-        if (user == null) return NotFound();
-
-        return new UserDTO
+        [HttpGet("{id}/chats")]
+        public async Task<ActionResult<IEnumerable<Chat>>> GetUserChats(string id)
         {
-            Id = user.Id,
-            Username = user.UserName,
-            Status = user.Status,
-            Avatar = user.Avatar // Добавляем аватар в DTO
-        };
-    }
+            var user = await _context.Users
+                .Include(u => u.ChatsAsUser1)
+                    .ThenInclude(c => c.User2)
+                .Include(u => u.ChatsAsUser2)
+                    .ThenInclude(c => c.User1)
+                .Include(u => u.ChatsAsUser1)
+                    .ThenInclude(c => c.Messages)
+                .Include(u => u.ChatsAsUser2)
+                    .ThenInclude(c => c.Messages)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
-    [HttpPost]
-    public async Task<ActionResult<UserDTO>> CreateUser(UserDTO userDto)
-    {
-        // Генерируем аватар только если он не был предоставлен
-        var avatar = !string.IsNullOrEmpty(userDto.Avatar)
-            ? userDto.Avatar
-            : GenerateOptimizedDefaultAvatar(userDto.Username);
+            if (user == null) return NotFound();
 
-        var user = new User(userDto.Username)
+            var chats = user.ChatsAsUser1.Concat(user.ChatsAsUser2).ToList();
+            return chats;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
-            Status = userDto.Status,
-            Avatar = avatar
-        };
+            return await _context.Users
+                .Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    Username = u.UserName,
+                    Status = u.Status,
+                    Avatar = u.Avatar // Добавляем аватар в DTO
+                })
+                .ToListAsync();
+        }
 
-        var result = await _userManager.CreateAsync(user);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserDTO>> GetUser(string id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
 
-        return CreatedAtAction(nameof(GetUser),
-            new { id = user.Id },
-            new UserDTO
+            return new UserDTO
             {
                 Id = user.Id,
                 Username = user.UserName,
                 Status = user.Status,
-                Avatar = user.Avatar
-            });
-    }
+                Avatar = user.Avatar // Добавляем аватар в DTO
+            };
+        }
 
-    private string GenerateOptimizedDefaultAvatar(string username)
-    {
-        // Возвращаем только HEX-код цвета
-        var colors = new[] {
+        [HttpGet("username/{username}")]
+        public async Task<ActionResult<UserDTO>> GetUserByUsername(string username)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null) return NotFound();
+
+            return new UserDTO
+            {
+                Id = user.Id,
+                Username = user.UserName,
+                Status = user.Status,
+                Avatar = user.Avatar // Добавляем аватар в DTO
+            };
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<UserDTO>> CreateUser(UserDTO userDto)
+        {
+            // Генерируем аватар только если он не был предоставлен
+            var avatar = !string.IsNullOrEmpty(userDto.Avatar)
+                ? userDto.Avatar
+                : GenerateOptimizedDefaultAvatar(userDto.Username);
+
+            var user = new User(userDto.Username)
+            {
+                Status = userDto.Status,
+                Avatar = avatar
+            };
+
+            var result = await _userManager.CreateAsync(user);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return CreatedAtAction(nameof(GetUser),
+                new { id = user.Id },
+                new UserDTO
+                {
+                    Id = user.Id,
+                    Username = user.UserName,
+                    Status = user.Status,
+                    Avatar = user.Avatar
+                });
+        }
+
+        private string GenerateOptimizedDefaultAvatar(string username)
+        {
+            // Возвращаем только HEX-код цвета
+            var colors = new[] {
         "#3B82F6", // blue-500
         "#EF4444", // red-500
         "#10B981", // green-500
@@ -125,51 +127,52 @@ public class UsersController : ControllerBase
         "#EC4899"  // pink-500
     };
 
-        return colors[Math.Abs(username.GetHashCode()) % colors.Length];
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(string id, UserDTO userDto)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
-
-        user.UserName = userDto.Username;
-        user.Status = userDto.Status;
-        if (!string.IsNullOrEmpty(userDto.Avatar))
-        {
-            user.Avatar = userDto.Avatar;
+            return colors[Math.Abs(username.GetHashCode()) % colors.Length];
         }
 
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(string id, UserDTO userDto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
 
-        return NoContent();
-    }
+            user.UserName = userDto.Username;
+            user.Status = userDto.Status;
+            if (!string.IsNullOrEmpty(userDto.Avatar))
+            {
+                user.Avatar = userDto.Avatar;
+            }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(string id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
-        var result = await _userManager.DeleteAsync(user);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return NoContent();
+        }
 
-        return NoContent();
-    }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
 
-    [HttpPost("{id}/avatar")]
-    public async Task<IActionResult> UploadAvatar(string id, [FromBody] string avatarBase64)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
-        user.Avatar = avatarBase64;
-        await _context.SaveChangesAsync();
+            return NoContent();
+        }
 
-        return Ok(new { Avatar = user.Avatar });
+        [HttpPost("{id}/avatar")]
+        public async Task<IActionResult> UploadAvatar(string id, [FromBody] string avatarBase64)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            user.Avatar = avatarBase64;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Avatar = user.Avatar });
+        }
     }
 }

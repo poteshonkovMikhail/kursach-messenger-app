@@ -39,34 +39,45 @@ const ChatsPage = () => {
     }
   };
 
-  const startNewChat = async (otherUserId: string | undefined) => {
-    if (!currentUser?.id || !otherUserId) return;
+// ChatsPage.tsx
+const startNewChat = async (otherUserId: string | undefined) => {
+  if (!currentUser?.id || !otherUserId) return;
 
-    try {
-      setLoading(true);
-      const newChat = await createChat({
-        user1: { id: currentUser.id },
-        user2: { id: otherUserId }
-      });
+  try {
+    setLoading(true);
+    const newChat = await createChat({
+      user1Id: currentUser.id,
+      user2Id: otherUserId
+    });
 
-      if (newChat?.chatId) {
-        setIsNewChatOpen(false);
-        navigate(`/chat/${newChat.chatId}`, { 
-          state: { 
-            chat: {
-              ...newChat,
-              user1: { id: currentUser.id, username: currentUser.username },
-              user2: { id: otherUserId, username: users.find(u => u.id === otherUserId)?.username }
-            } 
+    if (newChat?.chatId) {
+      setIsNewChatOpen(false);
+      navigate(`/chat/${newChat.chatId}`, { 
+        state: { 
+          chat: {
+            ...newChat,
+            user1: { 
+              id: currentUser.id, 
+              username: currentUser.username,
+              status: currentUser.status,
+              avatar: currentUser.avatar
+            },
+            user2: { 
+              id: otherUserId, 
+              username: users.find(u => u.id === otherUserId)?.username,
+              status: users.find(u => u.id === otherUserId)?.status,
+              avatar: users.find(u => u.id === otherUserId)?.avatar
+            }
           } 
-        });
-      }
-    } catch (error) {
-      console.error('Error creating chat:', error);
-    } finally {
-      setLoading(false);
+        } 
+      });
     }
-  };
+  } catch (error) {
+    console.error('Error creating chat:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   const handleLogout = () => {

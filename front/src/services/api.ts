@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { type User, type Chat, type GroupChat, type Message } from '../types';
+import { type User, type Chat, type GroupChat, type Message, type RegisterData, type AuthResponse, type LoginData, type CreateChatRequest } from '../types';
 
 // Base API URL - pointing to the real backend
 const API_URL = 'https://localhost:7058/api';
@@ -11,6 +11,97 @@ const api = axios.create({
     'Accept': 'application/json'
   },
 });
+
+// Add JWT token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const checkUsernameAvailability = async (username: string) => {
+  try {
+    const response = await api.get('/account/check-username', {
+      params: { username },
+    });
+    return response.data.available;
+  } catch (error) {
+    console.error('Error checking username:', error);
+    return false;
+  }
+};
+
+export const registerUser = async (data: RegisterData) => {
+  try {
+    const response = await api.post<AuthResponse>('/account/register', {
+      username: data.username,
+      email: data.email,
+      password: data.password,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Registration failed');
+    }
+    throw new Error('Registration failed');
+  }
+};
+
+export const loginUser = async (data: LoginData) => {
+  try {
+    const response = await api.post<AuthResponse>('/account/login', {
+      usernameOrEmail: data.usernameOrEmail,
+      password: data.password,
+      rememberMe: data.rememberMe,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Login failed');
+    }
+    throw new Error('Login failed');
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    const response = await api.get<User>('/account/current');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    return null;
+  }
+};
+
+export const logoutUser = async () => {
+  try {
+    // Получаем токен из хранилища
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
+    if (!token) {
+      console.warn('No token found for logout');
+      return;
+    }
+
+    const response = await api.post(
+      '/account/logout',
+      {}, // Пустое тело запроса
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error logging out:', error);
+    // Даже если выход не удался, продолжаем процесс на клиенте
+    throw error;
+  }
+};
 
 // User API
 /*export const getUserByUsername = async (username: string): Promise<User | null> => {
@@ -38,7 +129,8 @@ export const getUserByUsername = async (username: string): Promise<User | null> 
     return {
       id: user.id,
       username: user.username,
-      status: user.status
+      status: user.status,
+      avatar: user.avatar
     };
   } catch (error) {
     console.error('Error fetching user by username:', error);
@@ -55,7 +147,8 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User | nul
     return {
       id: response.data.id,
       username: response.data.username,
-      status: response.data.status
+      status: response.data.status,
+      avatar: response.data.avatar
     };
   } catch (error) {
     console.error('Error creating user:', error);
@@ -166,9 +259,13 @@ export const getChatById = async (chatId: string): Promise<Chat | null> => {
   }
 };
 
-export const createChat = async (chatData: Omit<Chat, 'chatId' | 'messages'>): Promise<Chat | null> => {
+// services/api.ts
+export const createChat = async (chatData: CreateChatRequest): Promise<Chat | null> => {
   try {
-    const response = await api.post<Chat>('/Chats', chatData);
+    const response = await api.post<Chat>('/Chats', {
+      user1Id: chatData.user1Id,
+      user2Id: chatData.user2Id
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating chat:', error);

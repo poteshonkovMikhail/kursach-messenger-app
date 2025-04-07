@@ -1,8 +1,28 @@
+// types.ts
 export interface User {
-  id: string;  // Изменяем с userId на id для соответствия бэкенду
-  username?: string;
-  status?: string;
-  avatar?: string;
+  id: string;
+  username: string;
+  email?: string;
+  status: string;
+  avatar: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface LoginData {
+  usernameOrEmail: string;
+  password: string;
+  rememberMe: boolean;
 }
 
 export interface Message {
@@ -18,6 +38,11 @@ export interface Chat {
   user1?: User;
   user2?: User;
   messages?: Message[];
+}
+
+export interface CreateChatRequest {
+  user1Id: string;
+  user2Id: string;
 }
 
 export interface GroupChat extends Chat {
