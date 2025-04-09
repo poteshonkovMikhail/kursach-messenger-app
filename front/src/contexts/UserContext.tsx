@@ -1,8 +1,7 @@
 import type React from 'react';
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '../types';
-import { getUserByUsername } from '../services/api';
-// contexts/UserContext.tsx
+import { getUserByUsername } from '../services/api'
 import { getCurrentUser, logoutUser } from '../services/api';
 
 interface AuthContextType {
@@ -33,11 +32,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           setToken(storedToken);
           if (storedUser) {
             setCurrentUser(JSON.parse(storedUser));
-            setIsAuthenticated(true);  // Устанавливаем аутентификацию
+            setIsAuthenticated(true); 
           } else {
             const user = await getCurrentUser();
             setCurrentUser(user);
-            setIsAuthenticated(!!user);  // Устанавливаем аутентификацию
+            setIsAuthenticated(!!user); 
           }
         } catch (error) {
           console.error('Error initializing auth:', error);
@@ -50,7 +49,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, []);
 
-  // Добавляем метод для входа
+  
   const login = (token: string, user: User, rememberMe: boolean) => {
     setToken(token);
     setCurrentUser(user);
@@ -67,13 +66,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      // Сначала пытаемся выполнить выход на сервере
+     
       await logoutUser();
     } catch (error) {
-      // Даже если выход на сервере не удался, продолжаем очистку на клиенте
+      
       console.warn('Server logout failed, clearing client session', error);
     } finally {
-      // Всегда очищаем клиентское состояние
+      
       setToken(null);
       setCurrentUser(null);
       setIsAuthenticated(false);
@@ -88,7 +87,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{ 
       currentUser, 
       token, 
-      isAuthenticated,  // Добавляем в контекст
+      isAuthenticated,  
       setCurrentUser, 
       setToken, 
       login,
