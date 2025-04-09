@@ -1,13 +1,12 @@
-import type React from 'react';
+// UserContext.tsx
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '../types';
-import { getUserByUsername } from '../services/api'
 import { getCurrentUser, logoutUser } from '../services/api';
 
 interface AuthContextType {
   currentUser: User | null;
   token: string | null;
-  isAuthenticated: boolean;  // Добавляем флаг аутентификации
+  isAuthenticated: boolean;
   setCurrentUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   login: (token: string, user: User, rememberMe: boolean) => void;
@@ -19,7 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);  // Состояние аутентификации
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,11 +31,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           setToken(storedToken);
           if (storedUser) {
             setCurrentUser(JSON.parse(storedUser));
-            setIsAuthenticated(true); 
+            setIsAuthenticated(true);
           } else {
             const user = await getCurrentUser();
             setCurrentUser(user);
-            setIsAuthenticated(!!user); 
+            setIsAuthenticated(!!user);
           }
         } catch (error) {
           console.error('Error initializing auth:', error);
@@ -49,7 +48,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, []);
 
-  
   const login = (token: string, user: User, rememberMe: boolean) => {
     setToken(token);
     setCurrentUser(user);
@@ -66,13 +64,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-     
       await logoutUser();
     } catch (error) {
-      
       console.warn('Server logout failed, clearing client session', error);
     } finally {
-      
       setToken(null);
       setCurrentUser(null);
       setIsAuthenticated(false);
@@ -87,7 +82,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{ 
       currentUser, 
       token, 
-      isAuthenticated,  
+      isAuthenticated,
       setCurrentUser, 
       setToken, 
       login,

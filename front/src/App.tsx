@@ -1,77 +1,91 @@
+// App.tsx
 import { useState, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useUser } from './contexts/UserContext';
 import LoginPage from './pages/LoginPage';
 import ChatsPage from './pages/ChatsPage';
 import ChatPage from './pages/ChatPage';
+import { Alert, Box, Button, Container, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 
 function App() {
   const { isAuthenticated } = useUser();
   const [error, setError] = useState<string | null>(null);
 
+  const theme = createTheme({
+    palette: {
+      primary: {
+        main: '#16a34a', // green-600
+      },
+      secondary: {
+        main: '#059669', // green-700
+      },
+      error: {
+        main: '#dc2626', // red-600
+      },
+      background: {
+        default: '#f3f4f6', // gray-100
+      },
+    },
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+            borderRadius: '8px',
+          },
+        },
+      },
+    },
+  });
+
   useEffect(() => {
-    // Check for initialization errors
     const handleError = (event: ErrorEvent) => {
       console.error('Error caught by error boundary:', event.error);
       setError(event.error?.message || 'An unknown error occurred');
     };
 
     window.addEventListener('error', handleError);
-
-    return () => {
-      window.removeEventListener('error', handleError);
-    };
+    return () => window.removeEventListener('error', handleError);
   }, []);
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-red-50 p-4">
-        <div className="mb-4 text-2xl font-bold text-red-600">Application Error</div>
-        <div className="mb-6 text-center text-red-700">{error}</div>
-        <button
-          onClick={() => window.location.reload()}
-          className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-        >
-          Reload Application
-        </button>
-      </div>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="sm" sx={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+          <Button 
+            variant="contained" 
+            color="error" 
+            onClick={() => window.location.reload()}
+            fullWidth
+          >
+            Reload Application
+          </Button>
+        </Container>
+      </ThemeProvider>
     );
   }
 
-  // Protected route component
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (!isAuthenticated) {
       return <Navigate to="/" replace />;
     }
-
     return <>{children}</>;
   };
 
   return (
-    <Routes>
-      <Route path="/" element={isAuthenticated ? <Navigate to="/chats" /> : <LoginPage />} />
-
-      <Route
-        path="/chats"
-        element={
-          <ProtectedRoute>
-            <ChatsPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/chat/:chatId"
-        element={
-          <ProtectedRoute>
-            <ChatPage />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Catch-all route */}
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Routes>
+        <Route path="/" element={isAuthenticated ? <Navigate to="/chats" /> : <LoginPage />} />
+        <Route path="/chats" element={<ProtectedRoute><ChatsPage /></ProtectedRoute>} />
+        <Route path="/chat/:chatId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </ThemeProvider>
   );
 }
 
