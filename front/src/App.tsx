@@ -1,42 +1,19 @@
-// App.tsx
-import { useState, useEffect } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { useUser } from './contexts/UserContext';
-import LoginPage from './pages/LoginPage';
-import ChatsPage from './pages/ChatsPage';
-import ChatPage from './pages/ChatPage';
-import { Alert, Box, Button, Container, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+// src/App.tsx
+import { ThemeProvider, CssBaseline, Container, Alert, Button, Box, Typography } from '@mui/material';
+import { appTheme } from './theme';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
+import { useEffect, useState } from 'react';
 
-function App() {
-  const { isAuthenticated } = useUser();
+import { ChatsPage } from './pages/ChatsPage/index';
+import { ChatPage } from './pages/ChatPage/index';
+import { GroupChatPage } from './pages/GroupChatPage/index';
+import  { AuthPage }  from './pages/AuthPage';
+import { ParticipantsPage } from './pages/ParticipantsPage/index';
+
+const App = () => {
   const [error, setError] = useState<string | null>(null);
-
-  const theme = createTheme({
-    palette: {
-      primary: {
-        main: '#16a34a', // green-600
-      },
-      secondary: {
-        main: '#059669', // green-700
-      },
-      error: {
-        main: '#dc2626', // red-600
-      },
-      background: {
-        default: '#f3f4f6', // gray-100
-      },
-    },
-    components: {
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            textTransform: 'none',
-            borderRadius: '8px',
-          },
-        },
-      },
-    },
-  });
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -48,20 +25,20 @@ function App() {
     return () => window.removeEventListener('error', handleError);
   }, []);
 
+  const ErrorPage = ({ error, onBack }: { error: string; onBack: () => void }) => (
+    <Box display="flex" height="100vh" alignItems="center" justifyContent="center">
+      <Typography color="error">{error}</Typography>
+      <Button onClick={onBack} sx={{ ml: 2 }}>Back to chats</Button>
+    </Box>
+  );
+
   if (error) {
     return (
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={appTheme}>
         <CssBaseline />
         <Container maxWidth="sm" sx={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-          <Button 
-            variant="contained" 
-            color="error" 
-            onClick={() => window.location.reload()}
-            fullWidth
-          >
+          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+          <Button variant="contained" color="error" onClick={() => window.location.reload()} fullWidth>
             Reload Application
           </Button>
         </Container>
@@ -70,23 +47,25 @@ function App() {
   }
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (!isAuthenticated) {
-      return <Navigate to="/" replace />;
-    }
-    return <>{children}</>;
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
   };
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={appTheme}>
       <CssBaseline />
-      <Routes>
-        <Route path="/" element={isAuthenticated ? <Navigate to="/chats" /> : <LoginPage />} />
-        <Route path="/chats" element={<ProtectedRoute><ChatsPage /></ProtectedRoute>} />
-        <Route path="/chat/:chatId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<AuthPage />} />
+          <Route path="/chats" element={<ProtectedRoute><ChatsPage /></ProtectedRoute>} />
+          <Route path="/chat/:chatId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/group/:groupId" element={<ProtectedRoute><GroupChatPage /></ProtectedRoute>} />
+          <Route path="/group/:groupId/participants" element={<ProtectedRoute><ParticipantsPage /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </AuthProvider>
     </ThemeProvider>
   );
-}
+};
 
 export default App;

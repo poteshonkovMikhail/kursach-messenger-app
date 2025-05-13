@@ -7,7 +7,7 @@ namespace Messenger.Models
 {
     public class User : IdentityUser
     {
-        public string Status { get; set; } = "public"; 
+        public string StatusVisibility { get; set; } = "public"; 
         public string Avatar { get; set; } // #HEX или base64-строка с закодированной аватаркой
 
         [JsonIgnore]
@@ -36,7 +36,7 @@ namespace Messenger.Models
 
         public void UpdateStatus(string newStatus)
         {
-            Status = newStatus;
+            StatusVisibility = newStatus;
         }
 
         // Метод для получения всех чатов пользователя

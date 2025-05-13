@@ -4,12 +4,13 @@ using Messenger.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Messenger.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableCors("AllowAll")]
+    [EnableCors("CorsPolicy")]
     public class ChatsController : ControllerBase
     {
         private readonly MessengerDbContext _context;
@@ -20,18 +21,33 @@ namespace Messenger.Controllers
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<Chat>>> GetUserChats(string userId)
+        public async Task<ActionResult<IEnumerable<Chat>>> GetUserChats(
+    string userId,
+    [FromQuery] bool includeLastMessage = false)
         {
-            var chats = await _context.Chats
+            IQueryable<Chat> query = _context.Chats
                 .Where(c => c.User1Id == userId || c.User2Id == userId)
                 .Include(c => c.User1)
-                .Include(c => c.User2)
-                .Include(c => c.Messages)
-                    .ThenInclude(m => m.Sender)
-                .Include(c => c.Messages)
-                //.ThenInclude(m => m.Chat.User2)
-                .OrderByDescending(c => c.Messages.Max(m => m.Timestamp))
+                .Include(c => c.User2);
+
+            if (includeLastMessage)
+            {
+                query = query
+                    .Include(c => c.Messages
+                        .OrderByDescending(m => m.Timestamp)
+                        .Take(1))
+                    .ThenInclude(m => m.Sender);
+            }
+            else
+            {
+                query = query.Include(c => c.Messages);
+            }
+        
+            var chats = await query
+                .OrderByDescending(c => c.Messages.Any() ?
+                    c.Messages.Max(m => m.Timestamp) : DateTime.MinValue)
                 .ToListAsync();
+
 
             return chats;
         }
@@ -51,7 +67,7 @@ namespace Messenger.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Chat>> GetChat(Guid id, [FromQuery] bool includeUsers = false)
+        public async Task<ActionResult<Chat>> GetChat(string id, [FromQuery] bool includeUsers = false)
         {
             var query = _context.Chats
                 .Include(c => c.Messages)
@@ -64,7 +80,7 @@ namespace Messenger.Controllers
                     .Include(c => c.User2);
             }
 
-            var chat = await query.FirstOrDefaultAsync(c => c.ChatId == id);
+            var chat = await query.FirstOrDefaultAsync(c => c.Id == id);
 
             if (chat == null) return NotFound();
             return chat;
@@ -83,13 +99,13 @@ namespace Messenger.Controllers
             _context.Chats.Add(chat);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetChat), new { id = chat.ChatId }, chat);
+            return CreatedAtAction(nameof(GetChat), new { id = chat.Id }, chat);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateChat(Guid id, Chat chat)
+        public async Task<IActionResult> UpdateChat(string id, Chat chat)
         {
-            if (id != chat.ChatId) return BadRequest();
+            if (id != chat.Id) return BadRequest();
 
             _context.Entry(chat).State = EntityState.Modified;
 
@@ -103,7 +119,7 @@ namespace Messenger.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteChat(Guid id)
+        public async Task<IActionResult> DeleteChat(string id)
         {
             var chat = await _context.Chats.FindAsync(id);
             if (chat == null) return NotFound();
@@ -113,6 +129,6 @@ namespace Messenger.Controllers
             return NoContent();
         }
 
-        private bool ChatExists(Guid id) => _context.Chats.Any(e => e.ChatId == id);
+        private bool ChatExists(string id) => _context.Chats.Any(e => e.Id == id);
     }
 }

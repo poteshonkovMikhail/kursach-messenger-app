@@ -10,7 +10,7 @@ namespace Messenger.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableCors("AllowAll")]
+    [EnableCors("CorsPolicy")]
     public class UsersController : ControllerBase
     {
         private readonly MessengerDbContext _context;
@@ -49,9 +49,9 @@ namespace Messenger.Controllers
                 .Select(u => new UserDTO
                 {
                     Id = u.Id,
-                    Username = u.UserName,
-                    Status = u.Status,
-                    Avatar = u.Avatar // Добавляем аватар в DTO
+                    UserName = u.UserName,
+                    StatusVisibility = u.StatusVisibility,
+                    Avatar = u.Avatar
                 })
                 .ToListAsync();
         }
@@ -65,9 +65,9 @@ namespace Messenger.Controllers
             return new UserDTO
             {
                 Id = user.Id,
-                Username = user.UserName,
-                Status = user.Status,
-                Avatar = user.Avatar // Добавляем аватар в DTO
+                UserName = user.UserName,
+                StatusVisibility = user.StatusVisibility,
+                Avatar = user.Avatar 
             };
         }
 
@@ -80,9 +80,9 @@ namespace Messenger.Controllers
             return new UserDTO
             {
                 Id = user.Id,
-                Username = user.UserName,
-                Status = user.Status,
-                Avatar = user.Avatar // Добавляем аватар в DTO
+                UserName = user.UserName,
+                StatusVisibility = user.StatusVisibility,
+                Avatar = user.Avatar
             };
         }
 
@@ -92,11 +92,11 @@ namespace Messenger.Controllers
             // Генерируем аватар только если он не был предоставлен
             var avatar = !string.IsNullOrEmpty(userDto.Avatar)
                 ? userDto.Avatar
-                : GenerateOptimizedDefaultAvatar(userDto.Username);
+                : GenerateOptimizedDefaultAvatar(userDto.UserName);
 
-            var user = new User(userDto.Username)
+            var user = new User(userDto.UserName)
             {
-                Status = userDto.Status,
+                StatusVisibility = userDto.StatusVisibility,
                 Avatar = avatar
             };
 
@@ -109,8 +109,8 @@ namespace Messenger.Controllers
                 new UserDTO
                 {
                     Id = user.Id,
-                    Username = user.UserName,
-                    Status = user.Status,
+                    UserName = user.UserName,
+                    StatusVisibility = user.StatusVisibility,
                     Avatar = user.Avatar
                 });
         }
@@ -136,8 +136,8 @@ namespace Messenger.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
 
-            user.UserName = userDto.Username;
-            user.Status = userDto.Status;
+            user.UserName = userDto.UserName;
+            user.StatusVisibility = userDto.StatusVisibility;
             if (!string.IsNullOrEmpty(userDto.Avatar))
             {
                 user.Avatar = userDto.Avatar;

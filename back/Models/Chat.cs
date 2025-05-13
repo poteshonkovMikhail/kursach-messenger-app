@@ -1,9 +1,9 @@
 ﻿// Chat.cs
 namespace Messenger.Models
 {
-    public class Chat
+    public class Chat : ChatsBase
     {
-        public Guid ChatId { get; private set; }
+        //public Guid ChatId { get; private set; }
         public string User1Id { get; private set; }
         public string User2Id { get; private set; }
 
@@ -16,7 +16,7 @@ namespace Messenger.Models
 
         public Chat(User user1, User user2)
         {
-            ChatId = Guid.NewGuid();
+            Id = Guid.NewGuid().ToString();
             User1Id = user1.Id;
             User2Id = user2.Id;
             User1 = user1;

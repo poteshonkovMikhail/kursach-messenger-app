@@ -60,3 +60,15 @@ body {
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
 }
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.typing-indicator {
+  animation: blink 1.4s infinite;
+  font-size: 0.9rem;
+  color: #1976d2;
+}

@@ -16,7 +16,7 @@ using Messenger.DTOs;
 namespace Messenger.Controllers { 
 [Route("api/[controller]")]
 [ApiController]
-[EnableCors("AllowAll")]
+[EnableCors("CorsPolicy")]
 public class AccountController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
@@ -90,8 +90,8 @@ public class AccountController : ControllerBase
                 User = new UserDTO
                 {
                     Id = user.Id,
-                    Username = user.UserName,
-                    Status = user.Status,
+                    UserName = user.UserName,
+                    StatusVisibility = user.StatusVisibility,
                     Avatar = user.Avatar
                 }
             });
@@ -115,7 +115,7 @@ public class AccountController : ControllerBase
 
         if (user == null)
         {
-            return BadRequest("Invalid username/email or password");
+            return Unauthorized("Invalid username/email or password");
         }
 
         var result = await _signInManager.PasswordSignInAsync(
@@ -133,14 +133,14 @@ public class AccountController : ControllerBase
                 User = new UserDTO
                 {
                     Id = user.Id,
-                    Username = user.UserName,
-                    Status = user.Status,
+                    UserName = user.UserName,
+                    StatusVisibility = user.StatusVisibility,
                     Avatar = user.Avatar
                 }
             });
         }
 
-        return BadRequest("Invalid username/email or password");
+        return Unauthorized("Invalid username/email or password");
     }
 
 
@@ -171,8 +171,8 @@ public class AccountController : ControllerBase
         return Ok(new UserDTO
         {
             Id = user.Id,
-            Username = user.UserName,
-            Status = user.Status,
+            UserName = user.UserName,
+            StatusVisibility = user.StatusVisibility,
             Avatar = user.Avatar
         });
     }

@@ -6,11 +6,11 @@ using Newtonsoft.Json;
 
 public class MessengerDbContext : IdentityDbContext<User>
 {
-
     public virtual DbSet<Chat> Chats { get; set; }
     public DbSet<GroupChat> GroupChats { get; set; }
     public DbSet<Message> Messages { get; set; }
     public virtual DbSet<User> Users { get; set; }
+    public DbSet<Participant> Participants { get; set; }
 
     public MessengerDbContext(DbContextOptions<MessengerDbContext> options) : base(options)
     {
@@ -35,7 +35,7 @@ public class MessengerDbContext : IdentityDbContext<User>
 
         // Настройка UserGroupChat
         modelBuilder.Entity<UserGroupChat>()
-            .HasKey(ugc => new { ugc.UserId, ugc.GroupChatId });
+        .HasKey(ugc => new { ugc.UserId, ugc.GroupChatId });
 
         modelBuilder.Entity<UserGroupChat>()
             .HasOne(ugc => ugc.User)
@@ -56,18 +56,45 @@ public class MessengerDbContext : IdentityDbContext<User>
             .HasForeignKey(m => m.SenderId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        /*modelBuilder.Entity<Message>()
+        modelBuilder.Entity<Message>()
             .HasOne(m => m.Chat)
-            .WithMany(u => u.ReceivedMessag)
-            .HasForeignKey(m => m.ReceiverId)
-            .OnDelete(DeleteBehavior.Restrict);*/
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ChatId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.GroupChat)
+            .WithMany(gc => gc.Messages)
+            .HasForeignKey(m => m.GroupChatId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
 
         // Настройка GroupChat
         modelBuilder.Entity<GroupChat>()
-            .Property(gc => gc.UserRoles)
-            .HasColumnType("jsonb")
-            .HasConversion(
-                v => JsonConvert.SerializeObject(v),
-                v => JsonConvert.DeserializeObject<Dictionary<string, string>>(v));
+            .HasOne(gc => gc.Admin)
+            .WithMany()
+            .HasForeignKey(gc => gc.AdminId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GroupChat>()
+            .HasMany(gc => gc.Participants)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "GroupChatParticipant",
+                j => j.HasOne<Participant>().WithMany().HasForeignKey("ParticipantId"),
+                j => j.HasOne<GroupChat>().WithMany().HasForeignKey("GroupChatId"),
+                j => j.ToTable("GroupChatParticipants"));
+
+        modelBuilder.Entity<GroupChat>()
+       .Property(gc => gc.UserRoles)
+       .HasColumnType("jsonb")
+       .HasConversion(
+           v => JsonConvert.SerializeObject(v),
+           v => JsonConvert.DeserializeObject<Dictionary<string, string>>(v));
+
+        modelBuilder.Entity<Participant>()
+            .Property(p => p.Role)
+            .HasConversion<string>();
     }
 }

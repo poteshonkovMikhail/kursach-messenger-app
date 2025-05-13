@@ -2,13 +2,16 @@
 
 // MessageDTO.cs
 namespace Messenger.DTOs
-{
+{       
     public class MessageDTO
     {
-        public Guid MessageId { get; set; }
+        public string MessageId { get; set; }
         public User Sender { get; set; }
-        public Guid ChatId { get; set; }
+        //public ChatType ChatType { get; set; }
+        public string ChatOrGroupChatId { get; set; }
         public string Content { get; set; }
         public DateTime Timestamp { get; set; }
     }
+
+    
 }

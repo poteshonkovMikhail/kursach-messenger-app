@@ -4,12 +4,13 @@ using Messenger.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Messenger.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableCors("AllowAll")]
+    [EnableCors("CorsPolicy")]
     public class MessagesController : ControllerBase
     {
         private readonly MessengerDbContext _context;
@@ -20,7 +21,7 @@ namespace Messenger.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Message>> GetMessage(Guid id)
+        public async Task<ActionResult<Message>> GetMessage(string id)
         {
             var message = await _context.Messages
                 .Include(m => m.Sender)
@@ -38,7 +39,7 @@ namespace Messenger.Controllers
                 {
                     MessageId = m.MessageId,
                     Sender = m.Sender,
-                    ChatId = m.ChatId,
+                    ChatOrGroupChatId = m.ChatOrGroupChatId,
                     Content = m.Content,
                     Timestamp = m.Timestamp
                 })
@@ -46,8 +47,26 @@ namespace Messenger.Controllers
                 .ToListAsync();
         }
 
+        [HttpGet("chat/{chatId}")]
+        public async Task<ActionResult<IEnumerable<MessageDTO>>> GetMessagesForChat(string chatId)
+        {
+            return await _context.Messages
+                .Where(m => m.ChatOrGroupChatId == chatId)
+                .Include(m => m.Sender)
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new MessageDTO
+                {
+                    MessageId = m.MessageId,
+                    Sender = m.Sender,
+                    ChatOrGroupChatId = m.ChatOrGroupChatId,
+                    Content = m.Content,
+                    Timestamp = m.Timestamp
+                })
+                .ToListAsync();
+        }
+
         [HttpPost]
-        public async Task<ActionResult<Message>> CreateMessage([FromBody] MessageDTO messageDto)
+        public async Task<ActionResult<MessageDTO>> CreateMessage([FromBody] MessageDTO messageDto)
         {
             if (messageDto.Sender == null || string.IsNullOrEmpty(messageDto.Sender.Id))
                 return BadRequest("Sender information is required");
@@ -56,11 +75,7 @@ namespace Messenger.Controllers
             if (sender == null)
                 return BadRequest("Sender not found");
 
-            var chat = await _context.Chats
-                .Include(c => c.User1)
-                .Include(c => c.User2)
-                .FirstOrDefaultAsync(c => c.ChatId == messageDto.ChatId);
-
+            var chat = await _context.Chats.FindAsync(messageDto.ChatOrGroupChatId);
             if (chat == null)
                 return BadRequest("Chat not found");
 
@@ -72,10 +87,17 @@ namespace Messenger.Controllers
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetMessage), new { id = message.MessageId }, message);
+            messageDto.MessageId = message.MessageId;
+            messageDto.Timestamp = message.Timestamp;
+            messageDto.Sender = sender;
+
+
+            return CreatedAtAction(nameof(GetMessagesForChat), new { chatId = messageDto.ChatOrGroupChatId }, messageDto);
         }
+
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMessage(Guid id, Message message)
+        public async Task<IActionResult> UpdateMessage(string id, Message message)
         {
             if (id != message.MessageId) return BadRequest();
 
@@ -91,7 +113,7 @@ namespace Messenger.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMessage(Guid id)
+        public async Task<IActionResult> DeleteMessage(string id)
         {
             var message = await _context.Messages.FindAsync(id);
             if (message == null) return NotFound();
@@ -101,6 +123,6 @@ namespace Messenger.Controllers
             return NoContent();
         }
 
-        private bool MessageExists(Guid id) => _context.Messages.Any(e => e.MessageId == id);
+        private bool MessageExists(string id) => _context.Messages.Any(e => e.MessageId == id);
     }
 }

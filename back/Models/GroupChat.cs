@@ -1,49 +1,85 @@
-﻿// GroupChat.cs
-using Messenger.Models;
+﻿//GroupChat.cs
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-public class GroupChat
+namespace Messenger.Models
 {
-    public Guid GroupChatId { get; set; }
-    public string Title { get; set; }
-    public User Admin { get; set; }
-    public List<User> Participants { get; set; }
-    public Dictionary<string, string> UserRoles { get; set; }
-
-    public List<Message> Messages { get; private set; }
-
-    [JsonIgnore]
-    public List<UserGroupChat> UserGroupChats { get; set; }
-
-    public GroupChat()
+    public class GroupChat : ChatsBase
     {
-        GroupChatId = Guid.NewGuid();
-        Participants = new List<User>();
-        UserRoles = new Dictionary<string, string>();
-        Messages = new List<Message>();
-    }
+        public string Title { get; set; }
 
-    public GroupChat(string title, User admin, List<User> participants) : this()
-    {
-        Title = title;
-        Admin = admin;
-        Participants.Add(admin);
-        AssignRole(admin.UserName, "Admin");
-        Participants.AddRange(participants);
-        foreach (var participant in participants)
+        public string AdminId { get; set; }
+
+        public User Admin { get; set; }
+
+        public List<Participant> Participants { get; set; }
+
+        public Dictionary<string, string> UserRoles { get; set; }
+
+        public List<Message> Messages { get; set; }
+
+        [JsonIgnore]
+        public List<UserGroupChat> UserGroupChats { get; set; }
+
+
+        public GroupChat()
         {
-            AssignRole(participant.UserName, "Member");
+            Id = Guid.NewGuid().ToString();
+            Participants = new List<Participant>();
+            UserRoles = new Dictionary<string, string>();
+            Messages = new List<Message>();
         }
+
+        public GroupChat(string title, User admin, List<User> users) : this()
+        {
+            Title = title;
+            Admin = admin;
+            AdminId = admin.Id;
+
+            Participants = users.Select(u => new Participant
+            {
+                Id = u.Id,
+                Username = u.UserName,
+                Avatar = u.Avatar,
+                Role = u.Id == admin.Id ? "Admin" : "Member",
+                StatusVisibility = "public"
+            }).ToList();
+
+            foreach (var user in users)
+            {
+                UserRoles[user.UserName] = user.Id == admin.Id ? "Admin" : "Member";
+            }
+        }
+
+        public void AddMessage(Message message)
+        {
+            Messages.Add(message);
+        }
+
+        public void AssignRole(string username, string role)
+        {
+            UserRoles[username] = role;
+        }
+
     }
 
-    public void AssignRole(string username, string role)
-    {
-        UserRoles[username] = role;
-    }
-
-    public void AddMessage(Message message)
-    {
-        Messages.Add(message);
-    }
+    public class Participant
+{
+    [Column(TypeName = "text")]
+    public string Id { get; set; }
+    
+    [Column(TypeName = "text")]
+    public string Username { get; set; }
+    
+    [Column(TypeName = "text")]
+    public string Avatar { get; set; }
+    
+    [Column(TypeName = "text")]
+    public string Role { get; set; }
+    
+    [Column(TypeName = "text")]
+    public string StatusVisibility { get; set; }
+}
 }

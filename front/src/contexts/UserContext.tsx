@@ -1,7 +1,7 @@
 // UserContext.tsx
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '../types';
-import { getCurrentUser, logoutUser } from '../services/api';
+import { getCurrentUser, logoutUser } from '../api/auth';
 
 interface AuthContextType {
   currentUser: User | null;

@@ -21,13 +21,50 @@ namespace Messenger.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("GroupChat", b =>
+            modelBuilder.Entity("GroupChatParticipant", b =>
                 {
-                    b.Property<Guid>("GroupChatId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParticipantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("GroupChatId", "ParticipantId");
+
+                    b.HasIndex("ParticipantId");
+
+                    b.ToTable("GroupChatParticipants", (string)null);
+                });
+
+            modelBuilder.Entity("Messenger.Models.Chat", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("User1Id")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("User2Id")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("User1Id");
+
+                    b.HasIndex("User2Id");
+
+                    b.ToTable("Chats");
+                });
+
+            modelBuilder.Entity("Messenger.Models.GroupChat", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<string>("AdminId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Title")
@@ -38,51 +75,27 @@ namespace Messenger.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
-                    b.HasKey("GroupChatId");
+                    b.HasKey("Id");
 
                     b.HasIndex("AdminId");
 
                     b.ToTable("GroupChats");
                 });
 
-            modelBuilder.Entity("Messenger.Models.Chat", b =>
-                {
-                    b.Property<Guid>("ChatId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("User1Id")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("User2Id")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("ChatId");
-
-                    b.HasIndex("User1Id");
-
-                    b.HasIndex("User2Id");
-
-                    b.ToTable("Chats");
-                });
-
             modelBuilder.Entity("Messenger.Models.Message", b =>
                 {
-                    b.Property<Guid>("MessageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("MessageId")
+                        .HasColumnType("text");
 
-                    b.Property<Guid>("ChatId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ChatId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("GroupChatId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("text");
 
                     b.Property<string>("SenderId")
                         .IsRequired()
@@ -107,6 +120,32 @@ namespace Messenger.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("Messenger.Models.Participant", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Avatar")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StatusVisibility")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Participants");
+                });
+
             modelBuilder.Entity("Messenger.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -129,9 +168,6 @@ namespace Messenger.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
-
-                    b.Property<Guid?>("GroupChatId")
-                        .HasColumnType("uuid");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -159,7 +195,7 @@ namespace Messenger.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("StatusVisibility")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -171,8 +207,6 @@ namespace Messenger.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GroupChatId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -189,8 +223,8 @@ namespace Messenger.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("GroupChatId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("text");
 
                     b.HasKey("UserId", "GroupChatId");
 
@@ -331,13 +365,19 @@ namespace Messenger.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("GroupChat", b =>
+            modelBuilder.Entity("GroupChatParticipant", b =>
                 {
-                    b.HasOne("Messenger.Models.User", "Admin")
+                    b.HasOne("Messenger.Models.GroupChat", null)
                         .WithMany()
-                        .HasForeignKey("AdminId");
+                        .HasForeignKey("GroupChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Admin");
+                    b.HasOne("Messenger.Models.Participant", null)
+                        .WithMany()
+                        .HasForeignKey("ParticipantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Messenger.Models.Chat", b =>
@@ -359,17 +399,28 @@ namespace Messenger.Migrations
                     b.Navigation("User2");
                 });
 
+            modelBuilder.Entity("Messenger.Models.GroupChat", b =>
+                {
+                    b.HasOne("Messenger.Models.User", "Admin")
+                        .WithMany()
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Admin");
+                });
+
             modelBuilder.Entity("Messenger.Models.Message", b =>
                 {
                     b.HasOne("Messenger.Models.Chat", "Chat")
                         .WithMany("Messages")
                         .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("GroupChat", null)
+                    b.HasOne("Messenger.Models.GroupChat", "GroupChat")
                         .WithMany("Messages")
-                        .HasForeignKey("GroupChatId");
+                        .HasForeignKey("GroupChatId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Messenger.Models.User", "Sender")
                         .WithMany("SentMessages")
@@ -383,19 +434,14 @@ namespace Messenger.Migrations
 
                     b.Navigation("Chat");
 
-                    b.Navigation("Sender");
-                });
+                    b.Navigation("GroupChat");
 
-            modelBuilder.Entity("Messenger.Models.User", b =>
-                {
-                    b.HasOne("GroupChat", null)
-                        .WithMany("Participants")
-                        .HasForeignKey("GroupChatId");
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Messenger.Models.UserGroupChat", b =>
                 {
-                    b.HasOne("GroupChat", "GroupChat")
+                    b.HasOne("Messenger.Models.GroupChat", "GroupChat")
                         .WithMany("UserGroupChats")
                         .HasForeignKey("GroupChatId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -463,18 +509,16 @@ namespace Messenger.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroupChat", b =>
-                {
-                    b.Navigation("Messages");
-
-                    b.Navigation("Participants");
-
-                    b.Navigation("UserGroupChats");
-                });
-
             modelBuilder.Entity("Messenger.Models.Chat", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Messenger.Models.GroupChat", b =>
+                {
+                    b.Navigation("Messages");
+
+                    b.Navigation("UserGroupChats");
                 });
 
             modelBuilder.Entity("Messenger.Models.User", b =>

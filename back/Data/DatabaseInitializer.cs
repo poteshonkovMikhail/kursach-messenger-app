@@ -18,25 +18,25 @@ public static class DatabaseInitializer
             new User("user1")
             {
                 Email = "user1@example.com",
-                Status = "online",
+                StatusVisibility = "online",
                 Avatar = "#3B82F6" // Синий
             },
             new User("user2")
             {
                 Email = "user2@example.com",
-                Status = "away",
+                StatusVisibility = "away",
                 Avatar = "#EF4444" // Красный
             },
             new User("user3")
             {
                 Email = "user3@example.com",
-                Status = "busy",
+                StatusVisibility = "busy",
                 Avatar = "#10B981" // Зеленый
             },
             new User("user4")
             {
                 Email = "user4@example.com",
-                Status = "online",
+                StatusVisibility = "online",
                 Avatar = "#8B5CF6" // Фиолетовый
             }
         };
@@ -55,7 +55,9 @@ public static class DatabaseInitializer
         var user2 = await userManager.FindByNameAsync("user2");
         var user3 = await userManager.FindByNameAsync("user3");
         var user4 = await userManager.FindByNameAsync("user4");
+        await context.SaveChangesAsync();
 
+        
         // Создаем чаты между пользователями
         var chats = new List<Chat>
         {
