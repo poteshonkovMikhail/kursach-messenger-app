@@ -18,25 +18,25 @@ public static class DatabaseInitializer
             new User("user1")
             {
                 Email = "user1@example.com",
-                StatusVisibility = "online",
+                StatusVisibility = "public",
                 Avatar = "#3B82F6" // Синий
             },
             new User("user2")
             {
                 Email = "user2@example.com",
-                StatusVisibility = "away",
+                StatusVisibility = "public",
                 Avatar = "#EF4444" // Красный
             },
             new User("user3")
             {
                 Email = "user3@example.com",
-                StatusVisibility = "busy",
+                StatusVisibility = "public",
                 Avatar = "#10B981" // Зеленый
             },
             new User("user4")
             {
                 Email = "user4@example.com",
-                StatusVisibility = "online",
+                StatusVisibility = "public",
                 Avatar = "#8B5CF6" // Фиолетовый
             }
         };

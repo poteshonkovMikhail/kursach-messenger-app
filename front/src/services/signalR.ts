@@ -1,3 +1,4 @@
+//services/signalR.ts
 import * as signalR from '@microsoft/signalr';
 import { TypingStatusDto, Message, OnlineStatusDto } from '../types';
 import { getToken } from '../utils/auth';
@@ -158,4 +159,3 @@ export const pingOnlineStatus = async (userId: string) => {
 export const updateUserActivity = async (userId: string) => {
   await unifiedConnection?.invoke("UpdateUserActivity", userId);
 };
-

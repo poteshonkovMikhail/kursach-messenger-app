@@ -50,8 +50,7 @@ const isUserOnline = (userId: string) => {
   return onlineStatuses[userId]?.isOnline ?? false;
 };
   
-    // In ChatsPage.tsx, update the online status handler
-useEffect(() => {
+/*useEffect(() => {
   const handleOnlineStatus = (status: OnlineStatusDto) => {
     setOnlineUsers(prev => {
       const newSet = new Set(prev);
@@ -68,7 +67,7 @@ useEffect(() => {
 
   onReceiveOnlineStatus(handleOnlineStatus);
   return () => removeOnlineStatusListener(handleOnlineStatus);
-}, []);
+}, []);*/
 
   const handleTypingStatus = useCallback((status: TypingStatusDto) => {
     console.log('Received typing status:', status);
@@ -119,7 +118,6 @@ useEffect(() => {
 
       setConnection(newConnection);
 
-      // Подписка на события должна быть ПЕРЕД присоединением к группам
       onReceiveOnlineStatus(handleOnlineStatus);
       onReceiveTypingStatus(handleTypingStatus);
 
@@ -165,7 +163,7 @@ useEffect(() => {
         console.error('Error sending ping:', error);
       }
     }
-  }, 15000); // Каждые 30 секунд
+  }, 3000); // Каждые 30 секунд
 
   return () => clearInterval(interval);
 }, [connection, currentUser?.id]);
@@ -397,6 +395,7 @@ useEffect(() => {
           onChatClick={(chat) => navigate(`/chat/${chat.id}`, { state: { chat } })}
           onGroupChatClick={(groupChat) => navigate(`/group/${groupChat.id}`, { state: { groupChat } })}
         />
+        
 
         <NewChatDialog
           open={isNewChatOpen}

@@ -59,7 +59,6 @@ export interface CreateChatRequest {
   user2Id: string;
 }
 
-// types.ts
 export interface GroupChat {
   id: string;
   title: string;
